@@ -3,7 +3,7 @@ using Unitful
 importall RecipesBase
 
 function unit_formatter(T, num)
-    string(num)*string(unit(zero(T)))
+    string(num)*" "*string(unit(zero(T)))
 end
 
 function handle_attributes!(d::Dict{Symbol, Any}, axis, T::Type)

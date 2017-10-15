@@ -6,75 +6,84 @@ function unit_formatter(T, num)
     string(num)*string(unit(zero(T)))
 end
 
-# 2D plots (1 recipe for shorthand form)
-@recipe function f{T<:Quantity}(val::AbstractVector{T})
-    yformatter := x->unit_formatter(T,x)
-    ustrip.(val)
+function handle_attributes!(d::Dict{Symbol, Any}, axis, T::Type)
+    if haskey(d, Symbol(axis, :guide))
+        d[Symbol(axis, :guide)] *= " ("*string(unit(zero(T)))*")"
+    elseif !haskey(d, Symbol(axis, :formatter))
+        d[Symbol(axis, :formatter)] = x->unit_formatter(T,x)
+    end
 end
+
+# 2D plots (1 recipe for shorthand form)
+@recipe function f(val::AbstractVector{T}, args...) where {T<:Quantity}
+    handle_attributes!(plotattributes, :y, T)
+    tuple(ustrip.(val), args...)
+end
+
 
 # 2D plots (2^4-1 user recipes)
-@recipe function f{S<:Quantity, T<:Quantity}(val::AbstractVector{S}, val2::AbstractVector{T})
-    xformatter := x->unit_formatter(S,x)
-    yformatter := x->unit_formatter(T,x)
-    ustrip.(val), ustrip.(val2)
+@recipe function f(val::AbstractVector{S}, val2::AbstractVector{T}, args...) where {S<:Quantity, T<:Quantity}
+    handle_attributes!(plotattributes, :x, S)
+    handle_attributes!(plotattributes, :y, T)
+    tuple(ustrip.(val), ustrip.(val2), args...)
 end
 
-@recipe function f{S<:Number, T<:Quantity}(val::AbstractVector{S}, val2::AbstractVector{T})
-    yformatter := x->unit_formatter(T,x)
-    val, ustrip.(val2)
+@recipe function f(val::AbstractVector{S}, val2::AbstractVector{T}, args...) where {S<:Number, T<:Quantity}
+    handle_attributes!(plotattributes, :y, T)
+    tuple(val, ustrip.(val2), args...)
 end
 
-@recipe function f{S<:Number, T<:Quantity}(val::AbstractVector{T}, val2::AbstractVector{S})
-    xformatter := x->unit_formatter(T,x)
-    ustrip.(val), val2
+@recipe function f(val::AbstractVector{S}, val2::AbstractVector{T}, args...) where {S<:Quantity, T<:Number}
+    handle_attributes!(plotattributes, :x, S)
+    tuple(ustrip.(val), val2, args...)
 end
 
 # 3D plots (2^8-1 user recipes)
-@recipe function f{S<:Quantity, T<:Quantity, U<:Quantity}(
-    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U})
-    xformatter := x->unit_formatter(S,x)
-    yformatter := x->unit_formatter(T,x)
-    zformatter := x->unit_formatter(U,x)
-    ustrip.(val), ustrip.(val2), ustrip.(val3)
+@recipe function f(
+    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U}, args...) where {S<:Quantity, T<:Quantity, U<:Quantity}
+    handle_attributes!(plotattributes, :x, S)
+    handle_attributes!(plotattributes, :y, T)
+    handle_attributes!(plotattributes, :z, U)
+    tuple(ustrip.(val), ustrip.(val2), ustrip.(val3), args...)
 end
 
-@recipe function f{S<:Quantity, T<:Quantity, U<:Number}(
-    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U})
-    xformatter := x->unit_formatter(S,x)
-    yformatter := x->unit_formatter(T,x)
-    ustrip.(val), ustrip.(val2), val3
+@recipe function f(
+    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U}, args...) where {S<:Quantity, T<:Quantity, U<:Number}
+    handle_attributes!(plotattributes, :x, S)
+    handle_attributes!(plotattributes, :y, T)
+    tuple(ustrip.(val), ustrip.(val2), val3, args...)
 end
 
-@recipe function f{S<:Quantity, T<:Number, U<:Quantity}(
-    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U})
-    xformatter := x->unit_formatter(S,x)
-    zformatter := x->unit_formatter(U,x)
-    ustrip.(val), val2, ustrip.(val3)
+@recipe function f(
+    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U}, args...) where {S<:Quantity, T<:Number, U<:Quantity}
+    handle_attributes!(plotattributes, :x, S)
+    handle_attributes!(plotattributes, :z, U)
+    tuple(ustrip.(val), val2, ustrip.(val3), args...)
 end
 
-@recipe function f{S<:Number, T<:Quantity, U<:Quantity}(
-    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U})
-    yformatter := x->unit_formatter(T,x)
-    zformatter := x->unit_formatter(U,x)
-    val, ustrip.(val2), ustrip.(val3)
+@recipe function f(
+    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U}, args...) where {S<:Number, T<:Quantity, U<:Quantity}
+    handle_attributes!(plotattributes, :y, T)
+    handle_attributes!(plotattributes, :z, U)
+    tuple(val, ustrip.(val2), ustrip.(val3), args...)
 end
 
-@recipe function f{S<:Quantity, T<:Number, U<:Number}(
-    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U})
-    xformatter := x->unit_formatter(S,x)
-    ustrip.(val), val2, val3
+@recipe function f(
+    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U}, args...) where {S<:Quantity, T<:Number, U<:Number}
+    handle_attributes!(plotattributes, :x, S)
+    tuple(ustrip.(val), val2, val3, args...)
 end
 
-@recipe function f{S<:Number, T<:Quantity, U<:Number}(
-    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U})
-    yformatter := x->unit_formatter(T,x)
-    val, ustrip.(val2), val3
+@recipe function f(
+    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U}, args...) where {S<:Number, T<:Quantity, U<:Number}
+    handle_attributes!(plotattributes, :y, T)
+    tuple(val, ustrip.(val2), val3, args...)
 end
 
-@recipe function f{S<:Number, T<:Number, U<:Quantity}(
-    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U})
-    zformatter := x->unit_formatter(U,x)
-    val, val2, ustrip.(val3)
+@recipe function f(
+    val::AbstractVector{S}, val2::AbstractVector{T}, val3::AbstractMatrix{U}) where {S<:Number, T<:Number, U<:Quantity}
+    handle_attributes!(plotattributes, :z, U)
+    tuple(val, val2, ustrip.(val3), args...)
 end
 
 end
